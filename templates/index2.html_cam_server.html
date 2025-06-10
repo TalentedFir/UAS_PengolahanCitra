@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Microsleep Detection (Server Camera & Upload)</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            color: #343a40;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 900px;
+            margin-top: 50px;
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+        h1, h4 {
+            color: #007bff;
+            margin-bottom: 25px;
+        }
+        hr {
+            margin: 40px 0;
+            border-top: 1px solid #dee2e6;
+        }
+        .form-control, .btn {
+            border-radius: 5px;
+        }
+        .file-input-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .file-input-wrapper input[type="file"] {
+            flex-grow: 1;
+        }
+        .image-preview-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap; /* Allow wrapping on small screens */
+        }
+        .image-preview, .image-output {
+            width: 300px;
+            height: 200px;
+            object-fit: contain;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            background-color: #e9ecef;
+            display: block; /* Ensure images are block level */
+        }
+        .video-stream-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .video-stream-container img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .note {
+            font-size: 0.9em;
+            color: #6c757d;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container text-center">
+        <h1>Microsleep Detection (YOLOv11)</h1>
+
+        <hr>
+        <h4>1. Deteksi Kamera Langsung (Server)</h4>
+        <p class="text-muted">Ini adalah aliran langsung dari kamera yang terhubung ke server. Model deteksi bekerja secara real-time di server.</p>
+        <div class="video-stream-container">
+            <img src="{{ url_for('video_feed') }}" alt="Live Camera Feed" />
+        </div>
+        <p class="note">Pastikan kamera terhubung ke server dan server Flask berjalan dengan baik. Tekan F5 jika stream tidak muncul.</p>
+
+        <hr>
+        <h4>2. Unggah Gambar untuk Deteksi</h4>
+        <p class="text-muted">Pilih gambar dari perangkat Anda untuk dideteksi microsleep-nya.</p>
+        <div class="file-input-wrapper">
+            <input type="file" id="imageUpload" accept="image/*" class="form-control">
+            <button onclick="uploadImage()" class="btn btn-primary">Deteksi Gambar</button>
+        </div>
+        <div class="image-preview-container">
+            <img id="uploadedImagePreview" src="https://placehold.co/300x200/cccccc/333333?text=Pratinjau+Gambar" alt="Pratinjau Gambar" class="image-preview">
+            <img id="outputImage" src="https://placehold.co/300x200/cccccc/333333?text=Hasil+Deteksi" alt="Hasil Deteksi" class="image-output">
+        </div>
+        <p class="note">Gambar di kiri adalah pratinjau gambar yang diunggah, gambar di kanan adalah hasil deteksi.</p>
+    </div>
+
+    <script>
+        const imageUpload = document.getElementById('imageUpload');
+        const uploadedImagePreview = document.getElementById('uploadedImagePreview');
+        const outputImage = document.getElementById('outputImage');
+
+        // Event listener for image upload preview
+        imageUpload.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    uploadedImagePreview.src = e.target.result;
+                    outputImage.src = "https://placehold.co/300x200/cccccc/333333?text=Hasil+Deteksi"; // Reset output image
+                };
+                reader.readAsDataURL(file);
+            } else {
+                uploadedImagePreview.src = "https://placehold.co/300x200/cccccc/333333?text=Pratinjau+Gambar";
+            }
+        });
+
+        // Function to upload image for detection
+        async function uploadImage() {
+            const file = imageUpload.files[0];
+            if (!file) {
+                alert('Pilih gambar terlebih dahulu!');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('image', file);
+
+            outputImage.src = "https://placehold.co/300x200/cccccc/333333?text=Memproses..."; // Loading indicator
+
+            try {
+                // Menggunakan endpoint yang sesuai dengan Flask app.py: /upload_image
+                const response = await fetch('/upload_image', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP error! Status: ${response.status}. Pesan: ${errorText}`);
+                }
+
+                const blob = await response.blob();
+                outputImage.src = URL.createObjectURL(blob);
+            } catch (error) {
+                console.error('Error uploading image:', error);
+                alert('Gagal mengunggah gambar: ' + error.message);
+                outputImage.src = "https://placehold.co/300x200/cccccc/333333?text=Error";
+            }
+        }
+    </script>
+</body>
+</html>
