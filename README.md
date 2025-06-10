@@ -2,9 +2,10 @@
 Berisi kode :
 
 1. Kode training
-2. Dataset + data.yaml
+2. --Dataset-- + data.yaml
 3. Kode deployment
 
+#UNTUK ALASAN KEAMANAN DATA, FOLDER LABELING TRAIN, VALID, TEST YANG BERISI WAJAH TIDAK AKAN DIUPLOAD
 
 
 
@@ -18,5 +19,4 @@ Berisi kode :
 
 
 
-
-SEMUA KODE DALAM REPOSITORY INI DIBUAT OLEH (2203431045) dengan bantuan AI
+*SEMUA KODE DALAM REPOSITORY INI DIBUAT OLEH (2203431045) dengan bantuan AI*
